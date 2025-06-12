@@ -19,14 +19,52 @@ const StyledScrollView = styled(ScrollView);
 export default function ResultScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
   const { result } = route.params;
-  const studentInfo = result.data.data.data[0];
-  const courses = result.data.data.data;
 
-  // Calculate total credits once
+  // Safely access the data with optional chaining and default values
+  const studentInfo = result?.data?.data?.data?.[0] || {};
+  const courses = result?.data?.data?.data || [];
+
+  // Calculate total credits with safe access
   const totalCredits = courses.reduce(
-    (sum, course) => sum + parseFloat(course.totalCredit || 0),
+    (sum, course) => sum + parseFloat(course?.totalCredit || 0),
     0
   );
+
+  // If no data is available, show a message
+  if (!studentInfo || Object.keys(studentInfo).length === 0) {
+    return (
+      <SafeAreaView
+        className="flex-1 bg-[#F5F6FA]"
+        style={{ paddingTop: insets.top }}
+      >
+        <StatusBar barStyle="light-content" />
+        <LinearGradient
+          colors={["#4A90E2", "#357ABD"]}
+          className="pt-5 pb-5 rounded-b-[30px] shadow-lg"
+        >
+          <StyledView className="flex-row items-center px-5">
+            <StyledTouchableOpacity
+              className="p-2 mr-2.5"
+              onPress={() => navigation.goBack()}
+            >
+              <StyledText className="text-white text-2xl font-semibold">
+                ←
+              </StyledText>
+            </StyledTouchableOpacity>
+            <StyledText className="text-2xl font-bold text-white">
+              Result Summary
+            </StyledText>
+          </StyledView>
+        </LinearGradient>
+
+        <StyledView className="flex-1 justify-center items-center p-5">
+          <StyledText className="text-lg text-[#2C3E50] text-center">
+            No result data available. Please try again.
+          </StyledText>
+        </StyledView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -66,20 +104,21 @@ export default function ResultScreen({ route, navigation }) {
           <StyledView className="flex-row justify-between items-center mb-2.5">
             <StyledView className="flex-1">
               <StyledText className="text-[22px] font-semibold text-[#2C3E50] mb-1">
-                {studentInfo.studentName}
+                {studentInfo.studentName || "N/A"}
               </StyledText>
               <StyledText className="text-sm text-[#7F8C8D]">
-                ID: {studentInfo.studentId}
+                ID: {studentInfo.studentId || "N/A"}
               </StyledText>
             </StyledView>
             <StyledView className="bg-[#4A90E2] px-4 py-2 rounded-[20px]">
               <StyledText className="text-sm text-white font-semibold">
-                {studentInfo.semesterName} {studentInfo.semesterYear}
+                {studentInfo.semesterName || "N/A"}{" "}
+                {studentInfo.semesterYear || ""}
               </StyledText>
             </StyledView>
           </StyledView>
           <StyledText className="text-sm text-[#7F8C8D] leading-5">
-            {studentInfo.program}
+            {studentInfo.program || "N/A"}
           </StyledText>
         </StyledView>
 
@@ -87,7 +126,7 @@ export default function ResultScreen({ route, navigation }) {
         <StyledView className="flex-row justify-between mb-5">
           <StyledView className="flex-1 bg-white rounded-[15px] p-4 mx-1 items-center shadow-md">
             <StyledText className="text-2xl font-bold text-[#4A90E2] mb-1">
-              {studentInfo.cgpa.toFixed(2)}
+              {(studentInfo.cgpa || 0).toFixed(2)}
             </StyledText>
             <StyledText className="text-xs text-[#7F8C8D] font-medium">
               CGPA
