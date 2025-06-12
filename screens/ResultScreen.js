@@ -1,18 +1,23 @@
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  Dimensions,
+  StatusBar,
 } from "react-native";
 import ResultTable from "../components/ResultTable";
 import { LinearGradient } from "expo-linear-gradient";
+import { styled } from "nativewind";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get("window");
+const StyledView = styled(View);
+const StyledText = styled(Text);
+const StyledTouchableOpacity = styled(TouchableOpacity);
+const StyledScrollView = styled(ScrollView);
 
 export default function ResultScreen({ route, navigation }) {
+  const insets = useSafeAreaInsets();
   const { result } = route.params;
   const studentInfo = result.data.data.data[0];
   const courses = result.data.data.data;
@@ -24,211 +29,96 @@ export default function ResultScreen({ route, navigation }) {
   );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      className="flex-1 bg-[#F5F6FA]"
+      style={{ paddingTop: insets.top }}
+    >
+      <StatusBar barStyle="light-content" />
       <LinearGradient
         colors={["#4A90E2", "#357ABD"]}
-        style={styles.headerGradient}
+        className="pt-5 pb-5 rounded-b-[30px] shadow-lg"
       >
-        <View style={styles.headerContainer}>
-          <TouchableOpacity
-            style={styles.backButton}
+        <StyledView className="flex-row items-center px-5">
+          <StyledTouchableOpacity
+            className="p-2 mr-2.5"
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
-          <Text style={styles.header}>Result Summary</Text>
-        </View>
+            <StyledText className="text-white text-2xl font-semibold">
+              ←
+            </StyledText>
+          </StyledTouchableOpacity>
+          <StyledText className="text-2xl font-bold text-white">
+            Result Summary
+          </StyledText>
+        </StyledView>
       </LinearGradient>
 
-      <ScrollView
-        contentContainerStyle={styles.container}
+      <StyledScrollView
+        className="flex-1"
+        contentContainerStyle={{
+          padding: 20,
+          paddingBottom: Math.max(40, insets.bottom + 20),
+        }}
         showsVerticalScrollIndicator={false}
       >
         {/* Student Info Section */}
-        <View style={styles.studentInfoCard}>
-          <View style={styles.studentHeader}>
-            <View style={styles.studentNameContainer}>
-              <Text style={styles.studentName}>{studentInfo.studentName}</Text>
-              <Text style={styles.studentId}>ID: {studentInfo.studentId}</Text>
-            </View>
-            <View style={styles.semesterBadge}>
-              <Text style={styles.semester}>
+        <StyledView className="bg-white rounded-[20px] p-5 mb-5 shadow-md">
+          <StyledView className="flex-row justify-between items-center mb-2.5">
+            <StyledView className="flex-1">
+              <StyledText className="text-[22px] font-semibold text-[#2C3E50] mb-1">
+                {studentInfo.studentName}
+              </StyledText>
+              <StyledText className="text-sm text-[#7F8C8D]">
+                ID: {studentInfo.studentId}
+              </StyledText>
+            </StyledView>
+            <StyledView className="bg-[#4A90E2] px-4 py-2 rounded-[20px]">
+              <StyledText className="text-sm text-white font-semibold">
                 {studentInfo.semesterName} {studentInfo.semesterYear}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.program}>{studentInfo.program}</Text>
-        </View>
+              </StyledText>
+            </StyledView>
+          </StyledView>
+          <StyledText className="text-sm text-[#7F8C8D] leading-5">
+            {studentInfo.program}
+          </StyledText>
+        </StyledView>
 
         {/* Quick Stats Section */}
-        <View style={styles.quickStatsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{studentInfo.cgpa.toFixed(2)}</Text>
-            <Text style={styles.statLabel}>CGPA</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{courses.length}</Text>
-            <Text style={styles.statLabel}>Courses</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{totalCredits.toFixed(1)}</Text>
-            <Text style={styles.statLabel}>Credits</Text>
-          </View>
-        </View>
+        <StyledView className="flex-row justify-between mb-5">
+          <StyledView className="flex-1 bg-white rounded-[15px] p-4 mx-1 items-center shadow-md">
+            <StyledText className="text-2xl font-bold text-[#4A90E2] mb-1">
+              {studentInfo.cgpa.toFixed(2)}
+            </StyledText>
+            <StyledText className="text-xs text-[#7F8C8D] font-medium">
+              CGPA
+            </StyledText>
+          </StyledView>
+          <StyledView className="flex-1 bg-white rounded-[15px] p-4 mx-1 items-center shadow-md">
+            <StyledText className="text-2xl font-bold text-[#4A90E2] mb-1">
+              {courses.length}
+            </StyledText>
+            <StyledText className="text-xs text-[#7F8C8D] font-medium">
+              Courses
+            </StyledText>
+          </StyledView>
+          <StyledView className="flex-1 bg-white rounded-[15px] p-4 mx-1 items-center shadow-md">
+            <StyledText className="text-2xl font-bold text-[#4A90E2] mb-1">
+              {totalCredits.toFixed(1)}
+            </StyledText>
+            <StyledText className="text-xs text-[#7F8C8D] font-medium">
+              Credits
+            </StyledText>
+          </StyledView>
+        </StyledView>
 
         {/* Course Results Section */}
-        <View style={styles.resultsContainer}>
-          <Text style={styles.sectionTitle}>Course Results</Text>
+        <StyledView className="bg-white rounded-[20px] p-5 shadow-md">
+          <StyledText className="text-lg font-semibold text-[#2C3E50] mb-4">
+            Course Results
+          </StyledText>
           <ResultTable result={result} />
-        </View>
-      </ScrollView>
+        </StyledView>
+      </StyledScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F5F6FA",
-  },
-  headerGradient: {
-    paddingTop: 20,
-    paddingBottom: 20,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 10,
-  },
-  backButtonText: {
-    color: "#FFFFFF",
-    fontSize: 24,
-    fontWeight: "600",
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    textShadowColor: "rgba(0, 0, 0, 0.2)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  container: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  studentInfoCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  studentHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  studentNameContainer: {
-    flex: 1,
-  },
-  studentName: {
-    fontSize: 22,
-    fontWeight: "600",
-    color: "#2C3E50",
-    marginBottom: 4,
-  },
-  studentId: {
-    fontSize: 14,
-    color: "#7F8C8D",
-  },
-  program: {
-    fontSize: 14,
-    color: "#7F8C8D",
-    lineHeight: 20,
-  },
-  semesterBadge: {
-    backgroundColor: "#4A90E2",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  semester: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    fontWeight: "600",
-  },
-  quickStatsContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 15,
-    padding: 15,
-    marginHorizontal: 5,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#4A90E2",
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: "#7F8C8D",
-    fontWeight: "500",
-  },
-  resultsContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#2C3E50",
-    marginBottom: 15,
-  },
-});

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import {
-  StyleSheet,
   Text,
   View,
   TextInput,
@@ -13,11 +12,22 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import axios from "axios";
+import { styled } from "nativewind";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const StyledView = styled(View);
+const StyledText = styled(Text);
+const StyledTextInput = styled(TextInput);
+const StyledTouchableOpacity = styled(TouchableOpacity);
+const StyledImage = styled(Image);
+const StyledScrollView = styled(ScrollView);
 
 export default function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [captchaImage, setCaptchaImage] = useState(null);
   const [captchaRaw, setCaptchaRaw] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -137,34 +147,48 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView
+      className="flex-1 bg-background"
+      style={{ paddingTop: insets.top }}
+    >
+      <StatusBar barStyle="light-content" />
       <LinearGradient
         colors={["#4A90E2", "#357ABD"]}
-        style={styles.headerGradient}
+        className="pt-4 pb-6 rounded-b-[30px] shadow-lg"
       >
-        <View style={styles.headerContainer}>
-          <Text style={styles.header}>DIU Result Checker</Text>
-          <Text style={styles.subHeader}>Check your semester results</Text>
-        </View>
+        <StyledView className="items-center px-5">
+          <StyledText className="text-3xl font-bold text-white mb-2">
+            DIU Result Checker
+          </StyledText>
+          <StyledText className="text-base text-white opacity-90">
+            Check your semester results
+          </StyledText>
+        </StyledView>
       </LinearGradient>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardAvoid}
+        className="flex-1"
         keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       >
-        <ScrollView
-          contentContainerStyle={styles.container}
+        <StyledScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            padding: 20,
+            paddingBottom: Math.max(40, insets.bottom + 20),
+          }}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
-          <View style={styles.formContainer}>
-            <View style={styles.inputGroup}>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Student ID</Text>
-                <TextInput
-                  style={styles.input}
+          <StyledView className="bg-surface rounded-[20px] p-5 shadow-md min-h-[500px]">
+            <StyledView className="mb-5">
+              <StyledView className="mb-4">
+                <StyledText className="text-sm text-text-primary font-semibold mb-2">
+                  Student ID
+                </StyledText>
+                <StyledTextInput
+                  className="w-full border border-border rounded-xl p-4 text-base bg-background text-text-primary"
                   placeholder="Enter Student ID"
                   value={studentId}
                   onChangeText={setStudentId}
@@ -172,86 +196,99 @@ export default function HomeScreen({ navigation }) {
                   placeholderTextColor="#95A5A6"
                   returnKeyType="next"
                 />
-              </View>
+              </StyledView>
 
-              <View style={styles.semesterRow}>
-                <View style={styles.semesterDropdownContainer}>
-                  <Text style={styles.label}>Semester Type</Text>
-                  <TouchableOpacity
-                    style={styles.dropdownButton}
+              <StyledView className="flex-row justify-between mb-4">
+                <StyledView className="flex-1 mx-1">
+                  <StyledText className="text-sm text-text-primary font-semibold mb-2">
+                    Semester Type
+                  </StyledText>
+                  <StyledTouchableOpacity
+                    className="bg-background border border-border rounded-xl p-4 min-h-[50px] justify-center"
                     onPress={() => setShowTypeDropdown(true)}
                   >
-                    <Text style={styles.dropdownButtonText}>
+                    <StyledText className="text-base text-text-primary">
                       {semesterType || "Select Type"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                    </StyledText>
+                  </StyledTouchableOpacity>
+                </StyledView>
 
-                <View style={styles.semesterDropdownContainer}>
-                  <Text style={styles.label}>Year</Text>
-                  <TouchableOpacity
-                    style={styles.dropdownButton}
+                <StyledView className="flex-1 mx-1">
+                  <StyledText className="text-sm text-text-primary font-semibold mb-2">
+                    Year
+                  </StyledText>
+                  <StyledTouchableOpacity
+                    className="bg-background border border-border rounded-xl p-4 min-h-[50px] justify-center"
                     onPress={() => setShowYearDropdown(true)}
                   >
-                    <Text style={styles.dropdownButtonText}>
+                    <StyledText className="text-base text-text-primary">
                       {semesterYear || "Select Year"}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+                    </StyledText>
+                  </StyledTouchableOpacity>
+                </StyledView>
+              </StyledView>
 
               {captchaImage && (
-                <View style={styles.captchaContainer}>
-                  <View style={styles.captchaImageRow}>
-                    <Image
+                <StyledView className="bg-background p-4 rounded-xl border border-border mb-4">
+                  <StyledView className="flex-row items-center justify-between mb-4">
+                    <StyledImage
                       source={{ uri: captchaImage }}
-                      style={styles.captchaImage}
+                      className="w-[200px] h-[60px]"
+                      resizeMode="contain"
                     />
-                    <TouchableOpacity
+                    <StyledTouchableOpacity
                       onPress={fetchCaptcha}
-                      style={styles.refreshButton}
+                      className="w-10 h-10 justify-center items-center bg-primary rounded-full"
                     >
-                      <Text style={styles.refreshText}>↻</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.captchaInputWrapper}>
-                    <Text style={styles.label}>Captcha</Text>
-                    <TextInput
-                      style={styles.captchaInput}
+                      <StyledText className="text-white text-xl font-bold">
+                        ↻
+                      </StyledText>
+                    </StyledTouchableOpacity>
+                  </StyledView>
+                  <StyledView>
+                    <StyledText className="text-sm text-text-primary font-semibold mb-2">
+                      Captcha
+                    </StyledText>
+                    <StyledTextInput
+                      className="w-full border border-border rounded-xl p-4 text-base bg-surface text-text-primary"
                       placeholder="Enter Captcha"
                       value={captchaInput}
                       onChangeText={setCaptchaInput}
                       placeholderTextColor="#95A5A6"
                       returnKeyType="done"
                     />
-                  </View>
-                </View>
+                  </StyledView>
+                </StyledView>
               )}
-            </View>
+            </StyledView>
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.submitButton]}
+            <StyledView className="flex-row justify-between">
+              <StyledTouchableOpacity
+                className="flex-1 mx-1 bg-primary rounded-xl p-4 items-center"
                 onPress={submitCaptcha}
                 disabled={loading}
               >
                 {loading ? (
                   <ActivityIndicator color="#FFFFFF" size="small" />
                 ) : (
-                  <Text style={styles.buttonText}>Check Result</Text>
+                  <StyledText className="text-white text-base font-semibold">
+                    Check Result
+                  </StyledText>
                 )}
-              </TouchableOpacity>
+              </StyledTouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.button, styles.resetButton]}
+              <StyledTouchableOpacity
+                className="flex-1 mx-1 bg-danger rounded-xl p-4 items-center"
                 onPress={resetForm}
                 disabled={loading}
               >
-                <Text style={styles.buttonText}>Reset</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
+                <StyledText className="text-white text-base font-semibold">
+                  Reset
+                </StyledText>
+              </StyledTouchableOpacity>
+            </StyledView>
+          </StyledView>
+        </StyledScrollView>
       </KeyboardAvoidingView>
 
       {/* Semester Type Dropdown Modal */}
@@ -261,26 +298,28 @@ export default function HomeScreen({ navigation }) {
         animationType="fade"
         onRequestClose={() => setShowTypeDropdown(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
+        <StyledTouchableOpacity
+          className="flex-1 bg-black/50 justify-center items-center"
           activeOpacity={1}
           onPress={() => setShowTypeDropdown(false)}
         >
-          <View style={styles.modalContent}>
+          <StyledView className="bg-surface rounded-xl p-3 w-4/5 max-h-[80%]">
             {semesterTypes.map((type) => (
-              <TouchableOpacity
+              <StyledTouchableOpacity
                 key={type}
-                style={styles.dropdownItem}
+                className="p-4 border-b border-border"
                 onPress={() => {
                   setSemesterType(type);
                   setShowTypeDropdown(false);
                 }}
               >
-                <Text style={styles.dropdownItemText}>{type}</Text>
-              </TouchableOpacity>
+                <StyledText className="text-base text-text-primary">
+                  {type}
+                </StyledText>
+              </StyledTouchableOpacity>
             ))}
-          </View>
-        </TouchableOpacity>
+          </StyledView>
+        </StyledTouchableOpacity>
       </Modal>
 
       {/* Year Dropdown Modal */}
@@ -290,230 +329,29 @@ export default function HomeScreen({ navigation }) {
         animationType="fade"
         onRequestClose={() => setShowYearDropdown(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
+        <StyledTouchableOpacity
+          className="flex-1 bg-black/50 justify-center items-center"
           activeOpacity={1}
           onPress={() => setShowYearDropdown(false)}
         >
-          <View style={styles.modalContent}>
+          <StyledView className="bg-surface rounded-xl p-3 w-4/5 max-h-[80%]">
             {years.map((year) => (
-              <TouchableOpacity
+              <StyledTouchableOpacity
                 key={year}
-                style={styles.dropdownItem}
+                className="p-4 border-b border-border"
                 onPress={() => {
                   setSemesterYear(year);
                   setShowYearDropdown(false);
                 }}
               >
-                <Text style={styles.dropdownItemText}>{year}</Text>
-              </TouchableOpacity>
+                <StyledText className="text-base text-text-primary">
+                  {year}
+                </StyledText>
+              </StyledTouchableOpacity>
             ))}
-          </View>
-        </TouchableOpacity>
+          </StyledView>
+        </StyledTouchableOpacity>
       </Modal>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#F5F6FA",
-  },
-  headerGradient: {
-    paddingTop: 20,
-    paddingBottom: 30,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 8,
-  },
-  headerContainer: {
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  header: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 8,
-    textShadowColor: "rgba(0, 0, 0, 0.2)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  subHeader: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    opacity: 0.9,
-  },
-  keyboardAvoid: {
-    flex: 1,
-  },
-  container: {
-    flexGrow: 1,
-    padding: 20,
-    paddingBottom: 40,
-  },
-  formContainer: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-    minHeight: 500,
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputContainer: {
-    marginBottom: 15,
-  },
-  label: {
-    fontSize: 14,
-    color: "#2C3E50",
-    marginBottom: 8,
-    fontWeight: "600",
-  },
-  input: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    padding: 15,
-    fontSize: 16,
-    backgroundColor: "#F8F9FA",
-    color: "#2C3E50",
-  },
-  semesterRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  semesterDropdownContainer: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  dropdownButton: {
-    backgroundColor: "#F8F9FA",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 12,
-    padding: 15,
-    minHeight: 50,
-    justifyContent: "center",
-  },
-  dropdownButtonText: {
-    fontSize: 16,
-    color: "#2C3E50",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 10,
-    width: "80%",
-    maxHeight: "80%",
-  },
-  dropdownItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
-  },
-  dropdownItemText: {
-    fontSize: 16,
-    color: "#2C3E50",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  button: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    alignItems: "center",
-    marginHorizontal: 5,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  submitButton: {
-    backgroundColor: "#4A90E2",
-  },
-  resetButton: {
-    backgroundColor: "#E74C3C",
-  },
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  captchaContainer: {
-    backgroundColor: "#F8F9FA",
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    marginBottom: 15,
-  },
-  captchaImageRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 15,
-  },
-  captchaImage: {
-    width: 200,
-    height: 60,
-    resizeMode: "contain",
-  },
-  captchaInputWrapper: {
-    width: "100%",
-  },
-  captchaInput: {
-    width: "100%",
-    borderWidth: 1,
-    borderColor: "#E0E0E0",
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    backgroundColor: "#FFFFFF",
-    color: "#2C3E50",
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#4A90E2",
-    borderRadius: 20,
-  },
-  refreshText: {
-    color: "#FFFFFF",
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-});
