@@ -128,11 +128,69 @@ export default function HomeScreen({ navigation }) {
       );
 
       if (response.data.status) {
-        navigation.navigate("Result", { result: response.data });
+        try {
+          navigation.navigate("Result", { result: response.data });
+        } catch (navError) {
+          Alert.alert(
+            "Navigation Error",
+            "Unable to show result. Please try again.",
+            [{ text: "OK" }]
+          );
+          console.error("Navigation error:", navError);
+        }
+      } else {
+        // Check if the error is due to captcha reuse
+        if (response.data.message?.toLowerCase().includes("captcha")) {
+          Alert.alert(
+            "Captcha Error",
+            "Captcha expired or maybe you have entered wrong captcha!",
+            [
+              {
+                text: "Refresh Captcha",
+                onPress: () => {
+                  fetchCaptcha();
+                  setCaptchaInput("");
+                },
+              },
+            ]
+          );
+        } else {
+          Alert.alert(
+            "Error",
+            response.data.message ||
+              "Failed to fetch result. Please try again.",
+            [
+              {
+                text: "Try Again",
+                onPress: () => {
+                  fetchCaptcha();
+                  setCaptchaInput("");
+                },
+              },
+            ]
+          );
+        }
+      }
+    } catch (error) {
+      // Check if the error is due to captcha reuse
+      if (error.response?.data?.message?.toLowerCase().includes("captcha")) {
+        Alert.alert(
+          "Captcha Error",
+          "Captcha expired or maybe you have entered wrong captcha!",
+          [
+            {
+              text: "Refresh Captcha",
+              onPress: () => {
+                fetchCaptcha();
+                setCaptchaInput("");
+              },
+            },
+          ]
+        );
       } else {
         Alert.alert(
-          "Error",
-          response.data.message || "Failed to fetch result. Please try again.",
+          "Connection Error",
+          "Unable to connect to the server. Please check your internet connection and try again.",
           [
             {
               text: "Try Again",
@@ -144,20 +202,6 @@ export default function HomeScreen({ navigation }) {
           ]
         );
       }
-    } catch (error) {
-      Alert.alert(
-        "Connection Error",
-        "Unable to connect to the server. Please check your internet connection and try again.",
-        [
-          {
-            text: "Try Again",
-            onPress: () => {
-              fetchCaptcha();
-              setCaptchaInput("");
-            },
-          },
-        ]
-      );
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from "react-native";
 import ResultTable from "../components/ResultTable";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,6 +19,15 @@ const StyledScrollView = styled(ScrollView);
 
 export default function ResultScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
+
+  // Check if route.params exists
+  if (!route?.params?.result) {
+    Alert.alert("Error", "No data found. Please try again.", [
+      { text: "OK", onPress: () => navigation.goBack() },
+    ]);
+    return null;
+  }
+
   const { result } = route.params;
 
   // Safely access the data with optional chaining and default values
@@ -32,38 +42,10 @@ export default function ResultScreen({ route, navigation }) {
 
   // If no data is available, show a message
   if (!studentInfo || Object.keys(studentInfo).length === 0) {
-    return (
-      <SafeAreaView
-        className="flex-1 bg-[#F5F6FA]"
-        style={{ paddingTop: insets.top }}
-      >
-        <StatusBar barStyle="light-content" />
-        <LinearGradient
-          colors={["#4A90E2", "#357ABD"]}
-          className="pt-5 pb-5 rounded-b-[30px] shadow-lg"
-        >
-          <StyledView className="flex-row items-center px-5">
-            <StyledTouchableOpacity
-              className="p-2 mr-2.5"
-              onPress={() => navigation.goBack()}
-            >
-              <StyledText className="text-white text-2xl font-semibold">
-                ←
-              </StyledText>
-            </StyledTouchableOpacity>
-            <StyledText className="text-2xl font-bold text-white">
-              Result Summary
-            </StyledText>
-          </StyledView>
-        </LinearGradient>
-
-        <StyledView className="flex-1 justify-center items-center p-5">
-          <StyledText className="text-lg text-[#2C3E50] text-center">
-            No result data available. Please try again.
-          </StyledText>
-        </StyledView>
-      </SafeAreaView>
-    );
+    Alert.alert("No Data", "No result data available. Please try again.", [
+      { text: "OK", onPress: () => navigation.goBack() },
+    ]);
+    return null;
   }
 
   return (
