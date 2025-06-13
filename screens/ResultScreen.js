@@ -31,8 +31,10 @@ export default function ResultScreen({ route, navigation }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState("");
 
-  // Initialize Gemini
-  const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY);
+  // Initialize Gemini with error handling
+  const genAI = new GoogleGenerativeAI(
+    process.env.EXPO_PUBLIC_GEMINI_API_KEY || ""
+  );
 
   // Check if route.params exists
   if (!route?.params?.result) {
@@ -56,15 +58,26 @@ export default function ResultScreen({ route, navigation }) {
 
   // If no data is available, show a message
   if (!studentInfo || Object.keys(studentInfo).length === 0) {
-    Alert.alert("No Data", "No result data available. Please try again.", [
-      { text: "OK", onPress: () => navigation.goBack() },
-    ]);
+    Alert.alert(
+      "No Data",
+      "Result has not been published yet. Please try again later.",
+      [{ text: "OK", onPress: () => navigation.goBack() }]
+    );
     return null;
   }
 
   const analyzeResult = async () => {
     try {
       setIsAnalyzing(true);
+
+      // Check if API key is available
+      if (!process.env.EXPO_PUBLIC_GEMINI_API_KEY) {
+        setAnalysis(
+          "Analysis feature is currently unavailable. Please try again later."
+        );
+        return;
+      }
+
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
       const prompt = `
@@ -111,7 +124,9 @@ export default function ResultScreen({ route, navigation }) {
       setAnalysis(analysis);
     } catch (error) {
       console.error("Analysis error:", error);
-      Alert.alert("Error", "Could not analyze results. Please try again.");
+      setAnalysis(
+        "Unable to analyze results at this time. Please try again later."
+      );
     } finally {
       setIsAnalyzing(false);
     }
