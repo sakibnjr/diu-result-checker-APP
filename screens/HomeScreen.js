@@ -157,6 +157,20 @@ export default function HomeScreen({ navigation }) {
               },
             ]
           );
+        } else if (response.data.message === "Data not Found!!") {
+          Alert.alert(
+            "No Result Found",
+            "No result found for the provided student ID and semester. Please verify your information and try again.",
+            [
+              {
+                text: "Try Again",
+                onPress: () => {
+                  fetchCaptcha();
+                  setCaptchaInput("");
+                },
+              },
+            ]
+          );
         } else {
           Alert.alert(
             "Error",
@@ -182,6 +196,20 @@ export default function HomeScreen({ navigation }) {
           [
             {
               text: "Refresh Captcha",
+              onPress: () => {
+                fetchCaptcha();
+                setCaptchaInput("");
+              },
+            },
+          ]
+        );
+      } else if (error.response?.data?.message === "Data not Found!!") {
+        Alert.alert(
+          "No Result Found",
+          "No result found for the provided student ID and semester. Please verify your information and try again.",
+          [
+            {
+              text: "Try Again",
               onPress: () => {
                 fetchCaptcha();
                 setCaptchaInput("");
