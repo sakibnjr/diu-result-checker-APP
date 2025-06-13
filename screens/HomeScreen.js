@@ -270,6 +270,7 @@ export default function HomeScreen({ navigation }) {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
             ref={scrollViewRef}
+            keyboardDismissMode="on-drag"
           >
             {/* Main Card */}
             <StyledView className="bg-white rounded-[24px] p-6 shadow-lg">
