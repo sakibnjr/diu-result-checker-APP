@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  Share,
 } from "react-native";
 import ResultTable from "../components/ResultTable";
 import { LinearGradient } from "expo-linear-gradient";
@@ -47,6 +48,51 @@ export default function ResultScreen({ route, navigation }) {
     ]);
     return null;
   }
+
+  const handleShare = async () => {
+    try {
+      // Format course results using the same data structure as ResultTable
+      const courseResults = courses
+        .map((course) => {
+          const courseTitle = course.courseTitle || "N/A";
+          const courseId = course.customCourseId || "N/A";
+          const grade = course.gradeLetter || "N/A";
+          const point = course.pointEquivalent || "0.00";
+          const credit = course.totalCredit || "0";
+
+          return `${courseId} - ${courseTitle}
+Grade: ${grade} (${point} Points, ${credit} Credits)`;
+        })
+        .join("\n\n");
+
+      const shareMessage = `
+🎓 DIU Result Checker
+
+Student Information:
+Name: ${studentInfo.studentName || "N/A"}
+ID: ${studentInfo.studentId || "N/A"}
+Program: ${studentInfo.program || "N/A"}
+Semester: ${studentInfo.semesterName || "N/A"} ${studentInfo.semesterYear || ""}
+
+Academic Performance:
+CGPA: ${(studentInfo.cgpa || 0).toFixed(2)}
+Total Courses: ${courses.length}
+Total Credits: ${totalCredits.toFixed(1)}
+
+Course Results:
+${courseResults}
+
+Download DIU Result Checker app to check your results!
+      `;
+
+      await Share.share({
+        message: shareMessage,
+        title: "My DIU Result",
+      });
+    } catch (error) {
+      Alert.alert("Error", "Failed to share result");
+    }
+  };
 
   return (
     <SafeAreaView
@@ -139,6 +185,15 @@ export default function ResultScreen({ route, navigation }) {
           </StyledText>
           <ResultTable result={result} />
         </StyledView>
+
+        <StyledTouchableOpacity
+          onPress={handleShare}
+          className="mt-4 bg-blue-500 rounded-lg py-3"
+        >
+          <StyledText className="text-white text-center font-semibold">
+            Share Result
+          </StyledText>
+        </StyledTouchableOpacity>
       </StyledScrollView>
     </SafeAreaView>
   );
