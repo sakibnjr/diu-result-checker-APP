@@ -8,6 +8,7 @@ import {
   Alert,
   Share,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import ResultTable from "../components/ResultTable";
 import { LinearGradient } from "expo-linear-gradient";
@@ -16,6 +17,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { useState, useEffect } from "react";
+import { MaterialIcons } from "@expo/vector-icons";
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -24,6 +28,11 @@ const StyledScrollView = styled(ScrollView);
 
 export default function ResultScreen({ route, navigation }) {
   const insets = useSafeAreaInsets();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState("");
+
+  // Initialize Gemini
+  const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_API_KEY);
 
   // Check if route.params exists
   if (!route?.params?.result) {
@@ -53,54 +62,84 @@ export default function ResultScreen({ route, navigation }) {
     return null;
   }
 
-  const handleShare = async () => {
+  const analyzeResult = async () => {
     try {
-      // Format course results using the same data structure as ResultTable
-      const courseResults = courses
-        .map((course) => {
-          const courseTitle = course.courseTitle || "N/A";
-          const courseId = course.customCourseId || "N/A";
-          const grade = course.gradeLetter || "N/A";
-          const point = course.pointEquivalent || "0.00";
-          const credit = course.totalCredit || "0";
+      setIsAnalyzing(true);
+      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-          return `📚 ${courseId}
-📖 ${courseTitle}
-📊 Grade: ${grade} | Points: ${point} | Credits: ${credit}`;
-        })
-        .join("\n\n");
+      const prompt = `
+        Generate a direct, bullet-point analysis of this student's academic performance. Start directly with the bullet points, no introductory text:
+        
+        Student: ${studentInfo.studentName}
+        Program: ${studentInfo.program}
+        Semester: ${studentInfo.semesterName} ${studentInfo.semesterYear}
+        CGPA: ${(studentInfo.cgpa || 0).toFixed(2)}
+        Total Courses: ${courses.length}
+        Total Credits: ${totalCredits.toFixed(1)}
+        
+        Course Results:
+        ${courses
+          .map(
+            (course) =>
+              `${course.customCourseId || "N/A"}: ${
+                course.gradeLetter || "N/A"
+              } (${course.totalCredit || "0"} credits) - ${
+                course.courseTitle || "N/A"
+              }`
+          )
+          .join("\n")}
+        
+        Format exactly as:
+        Student: [Name] | [Program] | CGPA: [Score] 🏆
 
-      const shareMessage = `
+        Semester: [Semester] [Year] | [Total Courses] Courses 📚
+
+        Performance: [One-line summary] 👍
+
+        Achievement: [Key highlight] ✨
+
+        Focus: [One area to improve] 🎯
+
+        Note: [Short motivational point] 💪
+        
+        Keep each bullet point under 15 words. Start directly with the first bullet point, no introductory text.
+      `;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const analysis = response.text();
+      setAnalysis(analysis);
+    } catch (error) {
+      console.error("Analysis error:", error);
+      Alert.alert("Error", "Could not analyze results. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (result?.data) {
+      analyzeResult(); // Automatically analyze when results are loaded
+    }
+  }, [result]);
+
+  const shareResult = async () => {
+    try {
+      const message = `
 🎓 DIU Result Checker
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
-👤 STUDENT INFORMATION
-━━━━━━━━━━━━━━━━━━━━━━━━
-Name: ${studentInfo.studentName || "N/A"}
-ID: ${studentInfo.studentId || "N/A"}
-Program: ${studentInfo.program || "N/A"}
-Semester: ${studentInfo.semesterName || "N/A"} ${studentInfo.semesterYear || ""}
-
-📈 ACADEMIC PERFORMANCE
-━━━━━━━━━━━━━━━━━━━━━━━━
-CGPA: ${(studentInfo.cgpa || 0).toFixed(2)}
-Total Courses: ${courses.length}
-Total Credits: ${totalCredits.toFixed(1)}
-
-📝 COURSE RESULTS
-━━━━━━━━━━━━━━━━━━━━━━━━
-${courseResults}
+${analysis ? `${analysis}` : ""}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
 📱 Download DIU Result Checker app to check your results!
       `;
 
       await Share.share({
-        message: shareMessage,
-        title: "My DIU Result",
+        message,
       });
     } catch (error) {
-      Alert.alert("Error", "Failed to share result");
+      Alert.alert("Error", "Could not share results");
     }
   };
 
@@ -399,21 +438,56 @@ ${courseResults}
           <ResultTable result={result} />
         </StyledView>
 
+        {/* Action Buttons */}
         <StyledView className="flex-row justify-between mt-4 space-x-3">
           <StyledTouchableOpacity
-            onPress={handleShare}
-            className="flex-1 bg-blue-500 rounded-lg py-3"
+            className="flex-1 bg-[#4A90E2] rounded-xl p-4 items-center flex-row justify-center shadow-lg"
+            onPress={shareResult}
+            disabled={isAnalyzing}
+            style={{
+              shadowColor: "#4A90E2",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
+              opacity: isAnalyzing ? 0.7 : 1,
+            }}
           >
-            <StyledText className="text-white text-center font-semibold">
-              Share Result
-            </StyledText>
+            {isAnalyzing ? (
+              <ActivityIndicator color="#FFFFFF" size="small" />
+            ) : (
+              <>
+                <MaterialIcons
+                  name="share"
+                  size={24}
+                  color="white"
+                  style={{ marginRight: 8 }}
+                />
+                <StyledText className="text-white text-base font-semibold">
+                  Share Result
+                </StyledText>
+              </>
+            )}
           </StyledTouchableOpacity>
 
           <StyledTouchableOpacity
+            className="flex-1 bg-green-500 rounded-xl p-4 items-center flex-row justify-center shadow-lg"
             onPress={generatePDF}
-            className="flex-1 bg-green-500 rounded-lg py-3"
+            style={{
+              shadowColor: "#4CAF50",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
+            }}
           >
-            <StyledText className="text-white text-center font-semibold">
+            <MaterialIcons
+              name="picture-as-pdf"
+              size={24}
+              color="white"
+              style={{ marginRight: 8 }}
+            />
+            <StyledText className="text-white text-base font-semibold">
               Generate PDF
             </StyledText>
           </StyledTouchableOpacity>

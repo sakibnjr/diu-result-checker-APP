@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-  SafeAreaView,
   KeyboardAvoidingView,
   Platform,
   Modal,
@@ -18,7 +17,11 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialIcons } from "@expo/vector-icons";
 import axios from "axios";
 import { styled } from "nativewind";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
+import { BlurView } from "expo-blur";
 
 const StyledView = styled(View);
 const StyledText = styled(Text);
@@ -39,6 +42,7 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [showYearDropdown, setShowYearDropdown] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const scrollViewRef = useRef(null);
 
   const semesterTypes = ["Spring", "Summer", "Fall"];
@@ -106,7 +110,7 @@ export default function HomeScreen({ navigation }) {
     }
 
     try {
-      setLoading(true);
+      setIsSubmitting(true);
       const payload = {
         image: captchaRaw,
         hidden: captchaInput,
@@ -139,7 +143,6 @@ export default function HomeScreen({ navigation }) {
           console.error("Navigation error:", navError);
         }
       } else {
-        // Check if the error is due to captcha reuse
         if (response.data.message?.toLowerCase().includes("captcha")) {
           Alert.alert(
             "Captcha Error",
@@ -172,7 +175,6 @@ export default function HomeScreen({ navigation }) {
         }
       }
     } catch (error) {
-      // Check if the error is due to captcha reuse
       if (error.response?.data?.message?.toLowerCase().includes("captcha")) {
         Alert.alert(
           "Captcha Error",
@@ -203,38 +205,25 @@ export default function HomeScreen({ navigation }) {
         );
       }
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const resetForm = () => {
-    setStudentId("");
-    setSemesterType("");
-    setSemesterYear("");
-    setSemesterId("");
-    setCaptchaInput("");
-    fetchCaptcha();
-  };
-
   return (
-    <LinearGradient
-      colors={["#4A90E2", "#357ABD", "#2C3E50"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      className="flex-1"
-    >
-      <SafeAreaView className="flex-1" style={{ paddingTop: insets.top }}>
-        <StatusBar barStyle="light-content" />
+    <View className="flex-1 bg-[#F5F6FA]">
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F6FA" />
+      <SafeAreaView className="flex-1">
+        {/* Header Section */}
         <LinearGradient
-          colors={["rgba(74, 144, 226, 0.95)", "rgba(53, 122, 189, 0.95)"]}
-          className="pt-4 pb-6 rounded-b-[30px] shadow-lg"
+          colors={["#4A90E2", "#357ABD"]}
+          className="pt-6 pb-8 rounded-b-[30px] shadow-lg"
         >
-          <StyledView className="items-center px-5">
+          <StyledView className="px-6">
             <StyledText className="text-3xl font-bold text-white mb-2">
               DIU Result Checker
             </StyledText>
-            <StyledText className="text-base text-white opacity-90">
-              Check your semester results
+            <StyledText className="text-base text-white/90">
+              Check your semester results instantly
             </StyledText>
           </StyledView>
         </LinearGradient>
@@ -252,64 +241,89 @@ export default function HomeScreen({ navigation }) {
             }}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="none"
-            automaticallyAdjustKeyboardInsets={true}
-            extraScrollHeight={Platform.OS === "android" ? 100 : 0}
             ref={scrollViewRef}
           >
-            <StyledView className="bg-white rounded-[20px] p-6 min-h-[500px] shadow-lg">
+            {/* Main Card */}
+            <StyledView className="bg-white rounded-[24px] p-6 shadow-lg">
+              {/* Student ID Input */}
               <StyledView className="mb-6">
-                <StyledView className="mb-5">
-                  <StyledText className="text-sm text-gray-700 font-semibold mb-2">
-                    Student ID
-                  </StyledText>
+                <StyledText className="text-sm font-semibold text-gray-700 mb-2">
+                  Student ID
+                </StyledText>
+                <StyledView className="relative">
+                  <MaterialIcons
+                    name="person"
+                    size={20}
+                    color="#4A90E2"
+                    style={{
+                      position: "absolute",
+                      left: 16,
+                      top: 16,
+                      zIndex: 1,
+                    }}
+                  />
                   <StyledTextInput
-                    className="w-full border border-gray-200 rounded-xl p-4 text-base bg-gray-50 text-gray-800 placeholder-gray-400"
+                    className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-4 text-base bg-gray-50 text-gray-800"
                     placeholder="Enter your student ID"
                     value={studentId}
                     onChangeText={setStudentId}
                     keyboardType="numeric"
                     placeholderTextColor="#9CA3AF"
                     returnKeyType="next"
-                    autoCapitalize="none"
-                    autoCorrect={false}
                   />
                 </StyledView>
+              </StyledView>
 
-                <StyledView className="flex-row justify-between mb-5">
-                  <StyledView className="flex-1 mx-1">
-                    <StyledText className="text-sm text-gray-700 font-semibold mb-2">
-                      Semester Type
+              {/* Semester Selection */}
+              <StyledView className="flex-row justify-between mb-6">
+                <StyledView className="flex-1 mr-2">
+                  <StyledText className="text-sm font-semibold text-gray-700 mb-2">
+                    Semester Type
+                  </StyledText>
+                  <StyledTouchableOpacity
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row items-center justify-between"
+                    onPress={() => setShowTypeDropdown(true)}
+                    disabled={isSubmitting}
+                  >
+                    <StyledText className="text-base text-gray-800">
+                      {semesterType || "Select Type"}
                     </StyledText>
-                    <StyledTouchableOpacity
-                      className="bg-gray-50 border border-gray-200 rounded-xl p-4 min-h-[50px] justify-center"
-                      onPress={() => setShowTypeDropdown(true)}
-                      activeOpacity={0.7}
-                    >
-                      <StyledText className="text-base text-gray-800">
-                        {semesterType || "Select Type"}
-                      </StyledText>
-                    </StyledTouchableOpacity>
-                  </StyledView>
-
-                  <StyledView className="flex-1 mx-1">
-                    <StyledText className="text-sm text-gray-700 font-semibold mb-2">
-                      Year
-                    </StyledText>
-                    <StyledTouchableOpacity
-                      className="bg-gray-50 border border-gray-200 rounded-xl p-4 min-h-[50px] justify-center"
-                      onPress={() => setShowYearDropdown(true)}
-                      activeOpacity={0.7}
-                    >
-                      <StyledText className="text-base text-gray-800">
-                        {semesterYear || "Select Year"}
-                      </StyledText>
-                    </StyledTouchableOpacity>
-                  </StyledView>
+                    <MaterialIcons
+                      name="arrow-drop-down"
+                      size={24}
+                      color="#4A90E2"
+                    />
+                  </StyledTouchableOpacity>
                 </StyledView>
 
-                {captchaImage && (
-                  <StyledView className="bg-gray-50 p-5 rounded-xl border border-gray-200 mb-5">
+                <StyledView className="flex-1 ml-2">
+                  <StyledText className="text-sm font-semibold text-gray-700 mb-2">
+                    Year
+                  </StyledText>
+                  <StyledTouchableOpacity
+                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex-row items-center justify-between"
+                    onPress={() => setShowYearDropdown(true)}
+                    disabled={isSubmitting}
+                  >
+                    <StyledText className="text-base text-gray-800">
+                      {semesterYear || "Select Year"}
+                    </StyledText>
+                    <MaterialIcons
+                      name="arrow-drop-down"
+                      size={24}
+                      color="#4A90E2"
+                    />
+                  </StyledTouchableOpacity>
+                </StyledView>
+              </StyledView>
+
+              {/* Captcha Section */}
+              {captchaImage && (
+                <StyledView className="mb-6">
+                  <StyledText className="text-sm font-semibold text-gray-700 mb-2">
+                    Verification Code
+                  </StyledText>
+                  <StyledView className="bg-gray-50 rounded-xl p-4 border border-gray-200">
                     <StyledView className="flex-row items-center justify-between mb-4">
                       <StyledImage
                         source={{ uri: captchaImage }}
@@ -318,8 +332,8 @@ export default function HomeScreen({ navigation }) {
                       />
                       <StyledTouchableOpacity
                         onPress={fetchCaptcha}
-                        className="w-10 h-10 justify-center items-center bg-gray-100 rounded-full"
-                        activeOpacity={0.7}
+                        className="w-10 h-10 justify-center items-center bg-white rounded-full shadow-sm"
+                        disabled={isSubmitting}
                       >
                         <MaterialIcons
                           name="refresh"
@@ -328,19 +342,24 @@ export default function HomeScreen({ navigation }) {
                         />
                       </StyledTouchableOpacity>
                     </StyledView>
-                    <StyledView>
-                      <StyledText className="text-sm text-gray-700 font-semibold mb-2">
-                        Captcha
-                      </StyledText>
+                    <StyledView className="relative">
+                      <MaterialIcons
+                        name="security"
+                        size={20}
+                        color="#4A90E2"
+                        style={{
+                          position: "absolute",
+                          left: 16,
+                          top: 16,
+                          zIndex: 1,
+                        }}
+                      />
                       <StyledTextInput
-                        className="w-full border border-gray-200 rounded-xl p-4 text-base bg-gray-50 text-gray-800 placeholder-gray-400"
-                        placeholder="Enter the captcha code"
+                        className="w-full border border-gray-200 rounded-xl pl-12 pr-4 py-4 text-base bg-white text-gray-800"
+                        placeholder="Enter the code"
                         value={captchaInput}
                         onChangeText={setCaptchaInput}
                         placeholderTextColor="#9CA3AF"
-                        returnKeyType="done"
-                        autoCapitalize="none"
-                        autoCorrect={false}
                         onFocus={() => {
                           setTimeout(() => {
                             scrollViewRef.current?.scrollToEnd({
@@ -348,55 +367,65 @@ export default function HomeScreen({ navigation }) {
                             });
                           }, 100);
                         }}
+                        editable={!isSubmitting}
                       />
                     </StyledView>
                   </StyledView>
-                )}
-              </StyledView>
+                </StyledView>
+              )}
 
-              <StyledView className="flex-row justify-center">
-                <StyledTouchableOpacity
-                  className="w-full bg-[#4A90E2] rounded-xl p-4 items-center flex-row justify-center"
-                  onPress={submitCaptcha}
-                  disabled={loading}
-                  activeOpacity={0.8}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#FFFFFF" size="small" />
-                  ) : (
-                    <>
-                      <MaterialIcons
-                        name="search"
-                        size={24}
-                        color="white"
-                        style={{ marginRight: 8 }}
-                      />
-                      <StyledText className="text-white text-base font-semibold">
-                        Check Result
-                      </StyledText>
-                    </>
-                  )}
-                </StyledTouchableOpacity>
-              </StyledView>
+              {/* Submit Button */}
+              <StyledTouchableOpacity
+                className="w-full bg-[#4A90E2] rounded-xl p-4 items-center flex-row justify-center shadow-lg"
+                onPress={submitCaptcha}
+                disabled={isSubmitting}
+                style={{
+                  shadowColor: "#4A90E2",
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 5,
+                  opacity: isSubmitting ? 0.7 : 1,
+                }}
+              >
+                {isSubmitting ? (
+                  <ActivityIndicator color="#FFFFFF" size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons
+                      name="search"
+                      size={24}
+                      color="white"
+                      style={{ marginRight: 8 }}
+                    />
+                    <StyledText className="text-white text-base font-semibold">
+                      Check Result
+                    </StyledText>
+                  </>
+                )}
+              </StyledTouchableOpacity>
             </StyledView>
           </StyledScrollView>
         </KeyboardAvoidingView>
 
-        {/* Semester Type Dropdown Modal */}
+        {/* Semester Type Modal */}
         <Modal
           visible={showTypeDropdown}
           transparent={true}
           animationType="fade"
           onRequestClose={() => setShowTypeDropdown(false)}
         >
-          <StyledView className="flex-1 justify-center items-center bg-black/50">
+          <BlurView
+            intensity={20}
+            className="flex-1 justify-center items-center"
+          >
             <StyledTouchableOpacity
               className="absolute inset-0"
               activeOpacity={1}
               onPress={() => setShowTypeDropdown(false)}
             />
-            <StyledView className="bg-white rounded-xl p-3 w-4/5 max-h-[80%] shadow-lg">
-              <StyledText className="text-lg font-semibold text-gray-800 mb-3 px-4">
+            <StyledView className="bg-white rounded-2xl p-4 w-[width-40] max-h-[80%] shadow-xl">
+              <StyledText className="text-lg font-semibold text-gray-800 mb-4 px-2">
                 Select Semester Type
               </StyledText>
               {semesterTypes.map((type) => (
@@ -407,7 +436,6 @@ export default function HomeScreen({ navigation }) {
                     setSemesterType(type);
                     setShowTypeDropdown(false);
                   }}
-                  activeOpacity={0.7}
                 >
                   <StyledText className="text-base text-gray-800">
                     {type}
@@ -415,24 +443,27 @@ export default function HomeScreen({ navigation }) {
                 </StyledTouchableOpacity>
               ))}
             </StyledView>
-          </StyledView>
+          </BlurView>
         </Modal>
 
-        {/* Year Dropdown Modal */}
+        {/* Year Modal */}
         <Modal
           visible={showYearDropdown}
           transparent={true}
           animationType="fade"
           onRequestClose={() => setShowYearDropdown(false)}
         >
-          <StyledView className="flex-1 justify-center items-center bg-black/50">
+          <BlurView
+            intensity={20}
+            className="flex-1 justify-center items-center"
+          >
             <StyledTouchableOpacity
               className="absolute inset-0"
               activeOpacity={1}
               onPress={() => setShowYearDropdown(false)}
             />
-            <StyledView className="bg-white rounded-xl p-3 w-4/5 max-h-[80%] shadow-lg">
-              <StyledText className="text-lg font-semibold text-gray-800 mb-3 px-4">
+            <StyledView className="bg-white rounded-2xl p-4 w-[width-40] max-h-[80%] shadow-xl">
+              <StyledText className="text-lg font-semibold text-gray-800 mb-4 px-2">
                 Select Year
               </StyledText>
               {years.map((year) => (
@@ -443,7 +474,6 @@ export default function HomeScreen({ navigation }) {
                     setSemesterYear(year);
                     setShowYearDropdown(false);
                   }}
-                  activeOpacity={0.7}
                 >
                   <StyledText className="text-base text-gray-800">
                     {year}
@@ -451,9 +481,9 @@ export default function HomeScreen({ navigation }) {
                 </StyledTouchableOpacity>
               ))}
             </StyledView>
-          </StyledView>
+          </BlurView>
         </Modal>
       </SafeAreaView>
-    </LinearGradient>
+    </View>
   );
 }
